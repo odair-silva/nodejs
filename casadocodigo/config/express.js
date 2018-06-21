@@ -12,7 +12,7 @@ module.exports = function() {
     app.use(bodyParser.urlencoded({extended: true}));
     app.use(bodyParser.json());
     app.use(expressValidator());
-    
+
     load('routes', {cwd: 'app'})
         .then('infra')
         .into(app);
