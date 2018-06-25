@@ -1,26 +1,41 @@
 module.exports = function(app) {
 
-    app.get('/produtos', function(req,res){
+    var listaProdutos = function(req, res, next) {
         var connection = app.infra.connectionFactory();
         var produtosDAO = new app.infra.ProdutosDAO(connection);
 
         produtosDAO.lista(function(err, results) {
-            console.log(err);
+            if(err) {
+                return next(err);
+            }
             res.format({
-                html: function(){
-                    res.render('produtos/lista', {lista: results});
+                html: function() {
+                    res.render('produtos/lista', {lista:results});
                 },
-                json: function(){
+                json: function() {
                     res.json(results);
                 }
             });
         });
 
         connection.end();
+    }
+
+    app.get('/produtos', listaProdutos);
+
+    app.get('/produtos/json', function(req, res) {
+        var connection = app.infra.connectionFactory();
+        var produtosDAO = new app.infra.ProdutosDAO(connection);
+
+        produtosDAO.lista(function(err, results) {
+            res.json(results);
+        });
+
+        connection.end();
     });
 
     app.get('/produtos/form', function(req, res) {
-        res.render('produtos/form',{errosValidacao:{},produto:{}});
+        res.render('produtos/form', {errosValidacao:{}, produto:{}});
     });
 
     app.post('/produtos', function(req, res) {
@@ -28,16 +43,18 @@ module.exports = function(app) {
 
         req.assert('titulo', 'Titulo é obrigatório').notEmpty();
         req.assert('preco', 'Formato inválido').isFloat();
+
         var erros = req.validationErrors();
-        if(erros){
+        if(erros) {
             res.format({
-                html: function(){
+                html: function() {
                     res.status(400).render('produtos/form', {errosValidacao:erros, produto:produto});
                 },
-                json: function(){
+                json: function() {
                     res.status(400).json(erros);
                 }
             });
+
             return;
         }
 
